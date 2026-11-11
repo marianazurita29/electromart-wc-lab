@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ElectroMart CCC</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main>
+    <h1>ElectroMart cash conversion cycle</h1>
+    <p class="sub">FIN 4150 · Working capital policy</p>
+
+    <p id="status" role="status">Loading data…</p>
+
+    <section id="days-section" hidden>
+      <h2>Days</h2>
+      <table>
+        <thead>
+          <tr><th></th><th>Before</th><th>After</th><th>Change</th></tr>
+        </thead>
+        <tbody id="days-body"></tbody>
+      </table>
+      <p class="note">DIO = Inventory ÷ COGS × days · DSO = Receivables ÷ Revenue × days · DPO = Payables ÷ COGS × days · CCC = DIO + DSO − DPO</p>
+    </section>
+
+    <section id="cash-section" hidden>
+      <h2>Cash freed</h2>
+      <table>
+        <thead>
+          <tr><th></th><th>Cash freed</th></tr>
+        </thead>
+        <tbody id="cash-body"></tbody>
+      </table>
+      <p class="note">A drop in inventory or receivables frees cash. A rise in payables frees cash.</p>
+    </section>
+
+    <section id="levers-section" hidden>
+      <h2>Try the levers</h2>
+
+      <div class="buttons">
+        <button type="button" id="set-before">Set to Before</button>
+        <button type="button" id="set-after">Set to After</button>
+      </div>
+
+      <div class="slider">
+        <label for="dio-slider">DIO <output id="dio-out" for="dio-slider"></output> days</label>
+        <input type="range" id="dio-slider" min="0" step="any">
+      </div>
+      <div class="slider">
+        <label for="dso-slider">DSO <output id="dso-out" for="dso-slider"></output> days</label>
+        <input type="range" id="dso-slider" min="0" step="any">
+      </div>
+      <div class="slider">
+        <label for="dpo-slider">DPO <output id="dpo-out" for="dpo-slider"></output> days</label>
+        <input type="range" id="dpo-slider" min="0" step="any">
+      </div>
+
+      <h3>Cash conversion cycle</h3>
+      <p class="big"><span id="lever-ccc"></span> days <span id="lever-ccc-change" class="muted"></span></p>
+
+      <h3>Balances and cash freed vs Before</h3>
+      <table>
+        <thead>
+          <tr><th></th><th>Balance</th><th>Cash freed</th></tr>
+        </thead>
+        <tbody id="lever-balances"></tbody>
+      </table>
+      <p class="note">Revenue and COGS are held at their Before values, so a balance is days × annual COGS (or revenue) ÷ 365.</p>
+
+      <h3>Interest and supplier terms</h3>
+      <table>
+        <tbody id="lever-terms"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="ccc.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
