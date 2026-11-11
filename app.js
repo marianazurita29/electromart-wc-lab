@@ -148,3 +148,21 @@ async function start() {
 }
 
 start();
+
+// Install the offline copy without delaying the calculator.
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", async () => {
+    const status = document.getElementById("offline-status");
+    try {
+      await navigator.serviceWorker.register("./sw.js", { scope: "./", updateViaCache: "none" });
+      await navigator.serviceWorker.ready;
+      status.textContent = "Ready for offline use. Install from your browser menu, or on iPhone use Share → Add to Home Screen.";
+    } catch (err) {
+      status.textContent = "Offline access is unavailable. You can still use the calculator online.";
+      console.error("Service worker registration failed:", err);
+    }
+  });
+} else {
+  document.getElementById("offline-status").textContent =
+    "You can use the calculator online. Use a browser with service worker support for offline access.";
+}
