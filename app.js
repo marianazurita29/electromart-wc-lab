@@ -148,3 +148,13 @@ async function start() {
 }
 
 start();
+
+// Register the service worker so the app installs and works offline.
+// The relative path keeps this working at https://<username>.github.io/<repository>/.
+if (typeof navigator !== "undefined" && "serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {
+      // The app still works without the service worker; it just won't run offline.
+    });
+  });
+}
