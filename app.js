@@ -7,6 +7,81 @@ const dollars = (n) => {
   return rounded < 0 ? "−" + text : text;
 };
 const signedDays = (n) => (n > 0 ? "+" : n < 0 ? "−" : "") + Math.abs(n).toFixed(2);
+const percent = (rate) => (rate * 100).toFixed(2) + "%";
+
+// Set up the three sliders and the two buttons, and redraw the results
+// whenever a slider moves. All math is done in ccc.js.
+function setupLevers(statements, assumptions, beforeDays, afterDays) {
+  const keys = ["dio", "dso", "dpo"];
+  const sliders = {};
+  const outputs = {};
+
+  keys.forEach((key) => {
+    const slider = document.getElementById(key + "-slider");
+    // The slider reaches 50% past the larger of Before and After, in steps of 10.
+    const biggest = Math.max(beforeDays[key], afterDays[key]);
+    slider.max = String(Math.ceil((biggest * 1.5) / 10) * 10);
+    slider.step = "any";
+    slider.addEventListener("input", render);
+    sliders[key] = slider;
+    outputs[key] = document.getElementById(key + "-out");
+  });
+
+  function currentDays() {
+    return {
+      dio: Number(sliders.dio.value),
+      dso: Number(sliders.dso.value),
+      dpo: Number(sliders.dpo.value),
+    };
+  }
+
+  function setTo(target) {
+    keys.forEach((key) => { sliders[key].value = String(target[key]); });
+    render();
+  }
+
+  function render() {
+    const d = currentDays();
+    keys.forEach((key) => { outputs[key].textContent = days(d[key]); });
+
+    const r = CCC.leverResults(d, statements.before, assumptions);
+
+    document.getElementById("lever-ccc").textContent = days(r.ccc);
+    document.getElementById("lever-ccc-change").textContent =
+      "(" + signedDays(r.ccc - beforeDays.ccc) + " vs Before)";
+
+    const balances = document.getElementById("lever-balances");
+    balances.replaceChildren(
+      row("Inventory", [dollars(r.balances.inventory), dollars(r.freed.inventory)]),
+      row("Receivables", [dollars(r.balances.receivables), dollars(r.freed.receivables)]),
+      row("Payables", [dollars(r.balances.payables), dollars(r.freed.payables)]),
+      row("Total cash freed", ["", dollars(r.freed.total)], "total")
+    );
+
+    const terms = document.getElementById("lever-terms");
+    const rows = [
+      row("Interest saved per year at " + percent(assumptions.bank_rate) +
+        " (assumes every freed dollar pays down the bank line)", [dollars(r.interestSaved)]),
+      row("Days paid past the " + assumptions.net_days + "-day due date",
+        [days(r.daysPastDue) + " days"]),
+    ];
+    if (r.takesDiscount) {
+      rows.push(row("Cost of skipping the " + percent(assumptions.supplier_discount) +
+        " discount", ["None: takes the discount"]));
+    } else {
+      rows.push(row("Annual cost of skipping the " + percent(assumptions.supplier_discount) +
+        " discount", [percent(r.discountCost)]));
+      rows.push(row("Discount given up each year", [dollars(r.discountGivenUp)]));
+    }
+    terms.replaceChildren(...rows);
+  }
+
+  document.getElementById("set-before").addEventListener("click", () => setTo(beforeDays));
+  document.getElementById("set-after").addEventListener("click", () => setTo(afterDays));
+
+  setTo(beforeDays);
+  document.getElementById("levers-section").hidden = false;
+}
 
 function row(label, cells, className) {
   const tr = document.createElement("tr");
@@ -60,6 +135,8 @@ async function start() {
     cashBody.appendChild(row("By receivables", [dollars(freed.receivables)]));
     cashBody.appendChild(row("By payables", [dollars(freed.payables)]));
     cashBody.appendChild(row("Total", [dollars(freed.total)], "total"));
+
+    setupLevers(statements, assumptions, before, after);
 
     document.getElementById("days-section").hidden = false;
     document.getElementById("cash-section").hidden = false;

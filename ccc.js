@@ -77,9 +77,56 @@ function cashFreed(before, after) {
   return { inventory, receivables, payables, total: inventory + receivables + payables };
 }
 
+// ---- Levers -------------------------------------------------------------
+// For the levers, revenue and COGS stay at their Before values.
+// The balance a number of days implies is days x annual COGS (or revenue) / days in year.
+function impliedBalances(d, before, daysInYear) {
+  return {
+    inventory: (d.dio * before.cogs) / daysInYear,
+    receivables: (d.dso * before.revenue) / daysInYear,
+    payables: (d.dpo * before.cogs) / daysInYear,
+  };
+}
+
+// Everything the lever panel shows, for days d = { dio, dso, dpo }.
+// before = the Before column of the statements, a = the assumptions.
+function leverResults(d, before, a) {
+  const n = a.days_in_year;
+  const balances = impliedBalances(d, before, n);
+
+  // Cash freed compared with Before: a lower asset or higher payables frees cash.
+  const freed = {
+    inventory: before.inventory - balances.inventory,
+    receivables: before.accounts_receivable - balances.receivables,
+    payables: balances.payables - before.accounts_payable,
+  };
+  freed.total = freed.inventory + freed.receivables + freed.payables;
+
+  // Interest saved if every freed dollar pays down the bank line.
+  // Only the Before bank balance can be paid off. Negative cash freed means
+  // more borrowing, so the saving is negative.
+  const interestSaved = Math.min(freed.total, before.notes_payable) * a.bank_rate;
+
+  // Paying suppliers late, and the cost of skipping the discount.
+  const daysPastDue = Math.max(0, d.dpo - a.net_days);
+  const takesDiscount = d.dpo <= a.discount_days;
+  const dsc = a.supplier_discount;
+  const discountCost = takesDiscount
+    ? null
+    : ((dsc / (1 - dsc)) * n) / (d.dpo - a.discount_days);
+  const discountGivenUp = takesDiscount ? 0 : dsc * before.cogs;
+
+  return {
+    ccc: ccc(d.dio, d.dso, d.dpo),
+    balances, freed, interestSaved,
+    daysPastDue, takesDiscount, discountCost, discountGivenUp,
+  };
+}
+
 const CCC = {
   splitCsvLine, parseCsv, statementsFrom, assumptionsFrom,
   dio, dso, dpo, ccc, daysFor, cashFreed,
+  impliedBalances, leverResults,
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = CCC;
